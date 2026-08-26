@@ -132,6 +132,32 @@
     100% { opacity: 0; transform: none; }
   }
 
+  /* Lain gif — subtle, glitching in the corner */
+  .lain-gif {
+    position: fixed;
+    right: 18px;
+    bottom: 18px;
+    width: 150px;
+    z-index: 5;
+    pointer-events: none;
+    opacity: 0.55;
+    border: 1px solid var(--dark-dim);
+    box-shadow: 0 0 18px rgba(51,255,102,0.15);
+    filter: saturate(0.85) contrast(1.05);
+    animation: gif-glitch 6s infinite steps(1), gif-fade 1.2s ease 3.2s both;
+  }
+  @keyframes gif-glitch {
+    0%, 90%, 100% { transform: none; }
+    91% { transform: translate(-2px, 1px) skewX(1deg); opacity: 0.75; }
+    93% { transform: none; }
+    96% { transform: translate(2px, -1px); opacity: 0.4; }
+    97% { transform: none; }
+  }
+  @keyframes gif-fade {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 0.55; transform: none; }
+  }
+
   .wrap { width: 100%; max-width: 520px; z-index: 10; }
 
   .boot {
@@ -176,7 +202,11 @@
     color: var(--green);
     text-shadow: 0 0 8px rgba(51,255,102,0.7), 0 0 24px rgba(51,255,102,0.3);
     position: relative;
-    animation: glitch-skew 6s infinite steps(1);
+    animation: glitch-skew 6s infinite steps(1), title-glow 4s ease-in-out infinite;
+  }
+  @keyframes title-glow {
+    0%, 100% { text-shadow: 0 0 8px rgba(51,255,102,0.7), 0 0 24px rgba(51,255,102,0.3); }
+    50% { text-shadow: 0 0 14px rgba(0,229,204,0.9), 0 0 40px rgba(51,255,102,0.5); }
   }
   h1.glitch::before, h1.glitch::after {
     content: attr(data-text);
@@ -193,6 +223,34 @@
     color: #ff3355;
     animation: glitch-b 2.4s infinite steps(1);
     clip-path: inset(55% 0 0 0);
+  }
+
+  /* ghost words drifting in the Wired */
+  #ghost-words {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    overflow: hidden;
+  }
+  #ghost-words span {
+    position: absolute;
+    font-family: 'VT323', monospace;
+    letter-spacing: 6px;
+    color: rgba(51,255,102,0.07);
+    text-shadow: 0 0 14px rgba(51,255,102,0.12);
+    white-space: nowrap;
+    animation: ghost-drift linear forwards, ghost-flicker steps(2) infinite;
+  }
+  @keyframes ghost-drift {
+    from { transform: translateX(110vw); }
+    to { transform: translateX(-120vw); }
+  }
+  @keyframes ghost-flicker {
+    0%, 88%, 100% { opacity: 1; }
+    90% { opacity: 0.2; }
+    93% { opacity: 0.8; }
+    96% { opacity: 0.3; }
   }
   @keyframes glitch-a {
     0%, 90%, 100% { transform: none; opacity: 0; }
@@ -269,6 +327,34 @@
   }
   a.node:hover .arrow { opacity: 1; transform: translateX(0); }
 
+  /* icon pulse */
+  a.node svg { animation: icon-pulse 3s ease-in-out infinite; }
+  a.node:nth-child(2) svg { animation-delay: .4s; }
+  a.node:nth-child(3) svg { animation-delay: .8s; }
+  a.node:nth-child(4) svg { animation-delay: 1.2s; }
+  a.node:nth-child(5) svg { animation-delay: 1.6s; }
+  a.node:nth-child(6) svg { animation-delay: 2.0s; }
+  a.node:nth-child(7) svg { animation-delay: 2.4s; }
+  @keyframes icon-pulse {
+    0%, 100% { filter: drop-shadow(0 0 3px rgba(51,255,102,0.3)); transform: scale(1); }
+    50% { filter: drop-shadow(0 0 9px rgba(0,229,204,0.7)); transform: scale(1.08); }
+  }
+
+  /* hover ripple ring */
+  a.node::after {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border: 1px solid rgba(51,255,102,0.5);
+    opacity: 0;
+    pointer-events: none;
+  }
+  a.node:hover::after { animation: ripple .6s ease-out; }
+  @keyframes ripple {
+    from { opacity: 0.8; inset: -1px; }
+    to { opacity: 0; inset: -8px; }
+  }
+
   a.node svg { width: 22px; height: 22px; fill: currentColor; flex-shrink: 0; filter: drop-shadow(0 0 4px rgba(51,255,102,0.4)); }
 
   .handle { color: var(--dim); font-size: 13px; margin-left: auto; }
@@ -301,11 +387,32 @@
     line-height: 1.8;
   }
 
+  /* digital rain canvas */
+  #rain {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    opacity: 0.25;
+  }
+
+  /* footer quote cycling */
+  footer .quote {
+    display: block;
+    margin-top: 10px;
+    color: var(--dim);
+    animation: quote-fade 1s ease;
+  }
+  @keyframes quote-fade { from { opacity: 0; filter: blur(2px); } }
+
   ::selection { background: var(--green); color: #000; }
 </style>
 </head>
 <body>
 <div class="lain-bg"></div>
+<img class="lain-gif" src="lain-laugh.gif" alt="">
+<canvas id="rain"></canvas>
+<div id="ghost-words"></div>
 <div id="particles"></div>
 <div id="glitch-flash"></div>
 <div class="wrap">
@@ -378,6 +485,7 @@
 
   <footer>
     CLOSE THE WORLD.<br>OPEN THE NEXT.
+    <span class="quote" id="quote"></span>
   </footer>
 
 </div>
@@ -421,7 +529,7 @@
   // ---- floating data particles ----
   (function () {
     const holder = document.getElementById('particles');
-    const glyphs = ['01', '10', '11', 'CYBERIA', 'LAIN', 'NAVI', '>>', 'wired', '0x1F', 'knights', '...'];
+    const glyphs = ['01', '10', '11', '0x1F', '...'];
     function spawn() {
       const s = document.createElement('span');
       s.textContent = glyphs[Math.floor(Math.random() * glyphs.length)];
@@ -437,6 +545,35 @@
     setInterval(spawn, 1100);
   })();
 
+  // ---- long Lain quotes drifting in the background ----
+  (function () {
+    const holder = document.getElementById('ghost-words');
+    const words = [
+      'no matter where you go, everyone\'s connected',
+      'if you are not remembered, then you never existed',
+      'I only exist inside the people who are aware of me',
+      'the real world is not real at all',
+      'people only have substance within the memories of others',
+      'close the world, open the next'
+    ];
+    let busy = false;
+    function spawn() {
+      if (busy) return;               // only one quote on screen at a time
+      busy = true;
+      const s = document.createElement('span');
+      s.textContent = words[Math.floor(Math.random() * words.length)];
+      s.style.top = (10 + Math.random() * 60) + '%';
+      s.style.fontSize = '22px';
+      s.style.letterSpacing = '3px';
+      const dur = 14;                  // slow, readable drift
+      s.style.animationDuration = dur + 's, 4s';
+      holder.appendChild(s);
+      setTimeout(() => { s.remove(); busy = false; }, dur * 1000);
+    }
+    setTimeout(spawn, 1500);
+    setInterval(spawn, 16000);
+  })();
+
   // ---- random fullscreen glitch bursts ----
   (function () {
     const flash = document.getElementById('glitch-flash');
@@ -446,6 +583,56 @@
       setTimeout(burst, 4000 + Math.random() * 9000);
     }
     setTimeout(burst, 5000);
+  })();
+
+  // ---- digital rain (matrix style, katakana + binary) ----
+  (function () {
+    const canvas = document.getElementById('rain');
+    const ctx = canvas.getContext('2d');
+    const chars = '01ﾊﾋﾌﾍﾎｦｱｳｴｵｶｷｹｻｼｽｾｿﬂﬀﬁλ'.split('');
+    let cols, drops;
+    function resize() {
+      canvas.width = innerWidth;
+      canvas.height = innerHeight;
+      cols = Math.floor(canvas.width / 16);
+      drops = Array.from({length: cols}, () => Math.random() * -100);
+    }
+    resize();
+    addEventListener('resize', resize);
+    setInterval(() => {
+      ctx.fillStyle = 'rgba(3,7,4,0.08)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.font = '14px "Share Tech Mono", monospace';
+      for (let i = 0; i < cols; i++) {
+        const x = i * 16, y = drops[i] * 16;
+        ctx.fillStyle = Math.random() > 0.97 ? '#00e5cc' : 'rgba(51,255,102,0.8)';
+        ctx.fillText(chars[Math.floor(Math.random() * chars.length)], x, y);
+        if (y > canvas.height && Math.random() > 0.975) drops[i] = 0;
+        drops[i]++;
+      }
+    }, 66);
+  })();
+
+  // ---- cycling Lain quotes in footer ----
+  (function () {
+    const el = document.getElementById('quote');
+    const quotes = [
+      '"if you are not remembered, then you never existed."',
+      '"I only exist inside the people who are aware of me."',
+      '"the real world is not real at all."',
+      '"people only have substance within the memories of others."',
+      '"no matter where you go, everyone\'s connected."'
+    ];
+    let qi = 0;
+    function show() {
+      el.style.animation = 'none';
+      void el.offsetWidth;
+      el.style.animation = '';
+      el.textContent = quotes[qi];
+      qi = (qi + 1) % quotes.length;
+    }
+    show();
+    setInterval(show, 7000);
   })();
 
   // ---- audio ----
