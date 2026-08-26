@@ -67,18 +67,69 @@
   /* Lain background image, dimmed under everything */
   .lain-bg {
     position: fixed;
-    inset: 0;
+    inset: -4%;
     z-index: 1;
     pointer-events: none;
     background: url('lain.png') center top / cover no-repeat;
     opacity: 0.18;
     filter: grayscale(0.4) hue-rotate(70deg);
+    animation: bg-breathe 14s ease-in-out infinite;
+  }
+  @keyframes bg-breathe {
+    0%, 100% { transform: scale(1); opacity: 0.16; }
+    50% { transform: scale(1.05) translateY(-6px); opacity: 0.22; }
   }
   .lain-bg::after {
     content: "";
     position: absolute;
     inset: 0;
     background: radial-gradient(ellipse at center, transparent 30%, var(--bg) 95%);
+  }
+
+  /* floating data particles */
+  #particles {
+    position: fixed;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+    overflow: hidden;
+  }
+  #particles span {
+    position: absolute;
+    bottom: -10px;
+    color: rgba(51,255,102,0.35);
+    font-size: 12px;
+    font-family: 'Share Tech Mono', monospace;
+    animation: rise linear infinite;
+    text-shadow: 0 0 6px rgba(51,255,102,0.5);
+    white-space: nowrap;
+  }
+  @keyframes rise {
+    to { transform: translateY(-110vh) rotate(8deg); opacity: 0; }
+  }
+
+  /* random fullscreen glitch burst */
+  #glitch-flash {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    pointer-events: none;
+    opacity: 0;
+    mix-blend-mode: screen;
+    background:
+      repeating-linear-gradient(to bottom,
+        transparent 0 6px,
+        rgba(51,255,102,0.08) 6px 7px,
+        transparent 7px 13px,
+        rgba(0,229,204,0.07) 13px 14px),
+      linear-gradient(100deg, transparent 30%, rgba(51,255,102,0.10) 45%, transparent 55%, rgba(255,51,85,0.06) 70%, transparent 80%);
+  }
+  #glitch-flash.on { animation: burst 0.28s steps(3) 1; }
+  @keyframes burst {
+    0% { opacity: 0; transform: translateX(0); }
+    33% { opacity: 0.9; transform: translateX(-8px) skewX(2deg); }
+    66% { opacity: 0.5; transform: translateX(6px) skewX(-3deg); }
+    100% { opacity: 0; transform: none; }
   }
 
   .wrap { width: 100%; max-width: 520px; z-index: 10; }
@@ -88,8 +139,10 @@
     color: var(--dim);
     margin-bottom: 28px;
     line-height: 1.6;
+    min-height: 4em;
   }
   .boot .ok { color: var(--teal); }
+  .boot .caret::after { content: "▌"; animation: blink .7s steps(1) infinite; color: var(--teal); }
 
   .avatar {
     width: 120px;
@@ -175,6 +228,25 @@
 
   .links { display: flex; flex-direction: column; gap: 14px; }
 
+  /* staggered entrance */
+  a.node, #audio-toggle, footer {
+    opacity: 0;
+    animation: fade-up .5s ease forwards;
+  }
+  a.node:nth-child(1) { animation-delay: 1.6s; }
+  a.node:nth-child(2) { animation-delay: 1.75s; }
+  a.node:nth-child(3) { animation-delay: 1.9s; }
+  a.node:nth-child(4) { animation-delay: 2.05s; }
+  a.node:nth-child(5) { animation-delay: 2.2s; }
+  a.node:nth-child(6) { animation-delay: 2.35s; }
+  a.node:nth-child(7) { animation-delay: 2.5s; }
+  #audio-toggle { animation-delay: 2.7s; }
+  footer { animation-delay: 2.9s; }
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(14px); filter: blur(3px); }
+    to { opacity: 1; transform: none; filter: none; }
+  }
+
   a.node {
     display: flex;
     align-items: center;
@@ -234,13 +306,11 @@
 </head>
 <body>
 <div class="lain-bg"></div>
+<div id="particles"></div>
+<div id="glitch-flash"></div>
 <div class="wrap">
 
-  <div class="boot">
-    &gt; connecting to the Wired... <span class="ok">[OK]</span><br>
-    &gt; protocol: NAVI-07 ... <span class="ok">[CONNECTED]</span><br>
-    &gt; no matter where you go, everyone's connected.
-  </div>
+  <div class="boot" id="boot"></div>
 
   <header>
     <h1 class="glitch" data-text="IQ">IQ</h1>
@@ -312,6 +382,73 @@
 
 </div>
 <script>
+  // ---- typewriter boot sequence ----
+  (function () {
+    const boot = document.getElementById('boot');
+    const lines = [
+      ['> connecting to the Wired... ', '[OK]'],
+      ['> protocol: NAVI-07 ... ', '[CONNECTED]'],
+      ["> no matter where you go, everyone's connected.", '']
+    ];
+    let li = 0, ci = 0;
+    function tick() {
+      if (li >= lines.length) { boot.classList.remove('caret'); return; }
+      const text = lines[li][0], ok = lines[li][1];
+      boot.innerHTML =
+        lines.slice(0, li).map(l => l[0] + '<span class="ok">' + l[1] + '</span>').join('<br>') +
+        (li ? '<br>' : '') + text.slice(0, ci);
+      if (ci < text.length) {
+        ci++;
+        setTimeout(tick, 18 + Math.random() * 30);
+      } else if (ok) {
+        // type out the status tag too
+        let k = 0;
+        (function tag() {
+          if (k <= ok.length) {
+            boot.innerHTML =
+              lines.slice(0, li).map(l => l[0] + '<span class="ok">' + l[1] + '</span>').join('<br>') +
+              (li ? '<br>' : '') + text + '<span class="ok">' + ok.slice(0, k) + '</span>';
+            k++;
+            setTimeout(tag, 40);
+          } else { li++; ci = 0; setTimeout(tick, 250); }
+        })();
+      } else { li++; ci = 0; setTimeout(tick, 350); }
+    }
+    boot.classList.add('caret');
+    tick();
+  })();
+
+  // ---- floating data particles ----
+  (function () {
+    const holder = document.getElementById('particles');
+    const glyphs = ['01', '10', '11', 'CYBERIA', 'LAIN', 'NAVI', '>>', 'wired', '0x1F', 'knights', '...'];
+    function spawn() {
+      const s = document.createElement('span');
+      s.textContent = glyphs[Math.floor(Math.random() * glyphs.length)];
+      s.style.left = Math.random() * 100 + '%';
+      s.style.fontSize = (9 + Math.random() * 8) + 'px';
+      const dur = 9 + Math.random() * 12;
+      s.style.animationDuration = dur + 's';
+      s.style.opacity = 0.2 + Math.random() * 0.5;
+      holder.appendChild(s);
+      setTimeout(() => s.remove(), dur * 1000);
+    }
+    for (let i = 0; i < 14; i++) setTimeout(spawn, i * 900);
+    setInterval(spawn, 1100);
+  })();
+
+  // ---- random fullscreen glitch bursts ----
+  (function () {
+    const flash = document.getElementById('glitch-flash');
+    function burst() {
+      flash.classList.add('on');
+      setTimeout(() => flash.classList.remove('on'), 300);
+      setTimeout(burst, 4000 + Math.random() * 9000);
+    }
+    setTimeout(burst, 5000);
+  })();
+
+  // ---- audio ----
   // Browsers block autoplay until the visitor interacts with the page,
   // so try to start immediately, then start on first click/tap/key.
   const audio = document.getElementById('bg-audio');
