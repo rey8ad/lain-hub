@@ -64,16 +64,28 @@
     98% { opacity: 1; }
   }
 
-  /* Lain background image, dimmed under everything */
+  /* Lain background — natural size, no stretching */
   .lain-bg {
     position: fixed;
-    inset: -4%;
+    inset: 0;
     z-index: 1;
     pointer-events: none;
-    background: url('lain.png') center top / cover no-repeat;
+    background: url('lain.png') center top / contain no-repeat;
     opacity: 0.18;
     filter: grayscale(0.4) hue-rotate(70deg);
     animation: bg-breathe 14s ease-in-out infinite;
+  }
+  @media (min-aspect-ratio: 4/5) {
+    /* PC / landscape: pin the art to the right at natural proportions,
+       fill the rest with a dark gradient so nothing stretches */
+    .lain-bg {
+      background:
+        linear-gradient(to left, rgba(3,7,4,1) 55%, transparent),
+        linear-gradient(to right, rgba(3,7,4,0.2), transparent 40%),
+        url('lain.png') right center / auto 85% no-repeat;
+      background-color: var(--bg);
+      opacity: 0.35;
+    }
   }
   @keyframes bg-breathe {
     0%, 100% { transform: scale(1); opacity: 0.16; }
